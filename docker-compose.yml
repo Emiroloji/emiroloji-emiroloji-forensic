@@ -116,11 +116,13 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8080 # <-- BU SATIRI DEĞİŞTİRİN
     container_name: frontend
     ports:
       - "3000:80"
     environment:
-      - REACT_APP_API_URL=http://localhost:8080
+      - NEXT_PUBLIC_API_URL=http://localhost:8080 # <-- BU SATIRI DEĞİŞTİRİN
     depends_on:
       - gateway-service
     networks:
