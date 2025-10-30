@@ -1,0 +1,101 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: audit-service
+  
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/forensic_audit}
+      database: ${MONGODB_DATABASE:forensic_audit}
+      username: ${MONGODB_USERNAME:forensic_user}
+      password: ${MONGODB_PASSWORD:forensic_secure_password_2024}
+      authentication-database: ${MONGODB_AUTH_DATABASE:admin}
+
+# Management endpoints
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    com.forensic.audit: ${LOG_LEVEL:INFO}
+    org.springframework.security: WARN
+    org.springframework.data.mongodb: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
+  file:
+    name: logs/audit-service.log
+    max-size: 100MB
+    max-history: 30
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+    tryItOutEnabled: true
+  show-actuator: true
+
+---
+# Development Profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+  
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/forensic_audit
+
+logging:
+  level:
+    com.forensic.audit: DEBUG
+
+---
+# Production Profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+  
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://mongodb:27017/forensic_audit}
+
+logging:
+  level:
+    com.forensic.audit: INFO
+    org.springframework.security: WARN
+    root: WARN
+
+---
+# Docker Profile
+spring:
+  config:
+    activate:
+      on-profile: docker
+  
+  data:
+    mongodb:
+      uri: mongodb://mongodb:27017/forensic_audit
+      username: forensic_user
+      password: ${MONGODB_PASSWORD:forensic_secure_password_2024}

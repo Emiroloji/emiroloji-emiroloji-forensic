@@ -1,0 +1,36 @@
+server.name: kibana
+server.host: "0.0.0.0"
+elasticsearch.hosts: [ "http://elasticsearch:9200" ]
+monitoring.ui.container.elasticsearch.enabled: true
+
+# Security settings
+xpack.security.enabled: false
+xpack.encryptedSavedObjects.encryptionKey: "forensic-encryption-key-32-chars"
+
+# Logging
+logging.appenders:
+  file:
+    type: file
+    fileName: /var/log/kibana/kibana.log
+    layout:
+      type: json
+logging.loggers:
+  - name: http.server.response
+    appenders: [file]
+    level: error
+
+# Index patterns
+kibana.defaultAppId: "discover"
+kibana.index: ".kibana"
+
+# Saved objects
+kibana.dataViews:
+  - name: "forensic-logs-*"
+    timeFieldName: "@timestamp"
+    title: "Forensic System Logs"
+  - name: "forensic-security-*"
+    timeFieldName: "@timestamp"
+    title: "Security Events"
+  - name: "forensic-face-analysis-*"
+    timeFieldName: "@timestamp"
+    title: "Face Analysis Events"

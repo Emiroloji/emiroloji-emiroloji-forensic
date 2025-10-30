@@ -1,0 +1,184 @@
+# Forensic Face Match System - Test Environment
+# =============================================
+# Docker Compose configuration for running comprehensive validation tests
+# Includes test database, monitoring, and report generation capabilities
+
+version: "3.8"
+
+services:
+  # Test Database for validation data
+  test-db:
+    image: postgres:15-alpine
+    container_name: forensic-test-db
+    environment:
+      POSTGRES_DB: forensic_test
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_pass123
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - test_db_data:/var/lib/postgresql/data
+      - ./test_data/init-test-db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d forensic_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MongoDB for audit log testing
+  test-mongo:
+    image: mongo:7.0
+    container_name: forensic-test-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: test_admin
+      MONGO_INITDB_ROOT_PASSWORD: test_mongo123
+      MONGO_INITDB_DATABASE: forensic_audit_test
+    volumes:
+      - test_mongo_data:/data/db
+      - ./test_data/init-mongo.js:/docker-entrypoint-initdb.d/init.js
+    ports:
+      - "27018:27017"
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching tests
+  test-redis:
+    image: redis:7.2-alpine
+    container_name: forensic-test-redis
+    command: redis-server --requirepass test_redis123
+    volumes:
+      - test_redis_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Main test execution service
+  forensic-test-suite:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: forensic-test-executor
+    environment:
+      # Test database connections
+      - TEST_DB_HOST=test-db
+      - TEST_DB_PORT=5432
+      - TEST_DB_NAME=forensic_test
+      - TEST_DB_USER=test_user
+      - TEST_DB_PASSWORD=test_pass123
+      - TEST_MONGO_HOST=test-mongo
+      - TEST_MONGO_PORT=27017
+      - TEST_MONGO_DB=forensic_audit_test
+      - TEST_REDIS_HOST=test-redis
+      - TEST_REDIS_PORT=6379
+      - TEST_REDIS_PASSWORD=test_redis123
+
+      # Test configuration
+      - TEST_ENV=comprehensive
+      - LOG_LEVEL=INFO
+      - VALIDATION_MODE=forensic
+      - PRECISION_THRESHOLD=0.999
+      - ERROR_MARGIN_THRESHOLD=0.001
+
+      # Test data paths
+      - TEST_DATA_PATH=/app/test_data
+      - TEST_RESULTS_PATH=/app/test_results
+      - TEST_REPORTS_PATH=/app/test_reports
+    volumes:
+      - ./test_data:/app/test_data:ro
+      - ./test_results:/app/test_results
+      - ./test_reports:/app/test_reports
+      - ./logs:/app/logs
+    ports:
+      - "8080:8080" # Test report server
+    networks:
+      - test-network
+    depends_on:
+      test-db:
+        condition: service_healthy
+      test-mongo:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: >
+      sh -c "
+        echo 'Waiting for services to be ready...' &&
+        sleep 10 &&
+        echo 'Starting comprehensive validation suite...' &&
+        python forensic_validation_suite.py &&
+        echo 'Validation completed. Starting report server...' &&
+        python -m http.server 8080 --directory /app/test_reports
+      "
+
+  # Test monitoring and metrics
+  test-prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: forensic-test-prometheus
+    volumes:
+      - ./monitoring/test-prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9091:9090"
+    networks:
+      - test-network
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
+
+  # Test metrics visualization
+  test-grafana:
+    image: grafana/grafana:10.2.0
+    container_name: forensic-test-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=test_grafana123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - test_grafana_data:/var/lib/grafana
+      - ./monitoring/test-dashboards:/var/lib/grafana/dashboards:ro
+      - ./monitoring/test-dashboard-config.yml:/etc/grafana/provisioning/dashboards/config.yml:ro
+    ports:
+      - "3001:3000"
+    networks:
+      - test-network
+    depends_on:
+      - test-prometheus
+
+volumes:
+  test_db_data:
+    driver: local
+    name: forensic_test_db_data
+  test_mongo_data:
+    driver: local
+    name: forensic_test_mongo_data
+  test_redis_data:
+    driver: local
+    name: forensic_test_redis_data
+  test_grafana_data:
+    driver: local
+    name: forensic_test_grafana_data
+
+networks:
+  test-network:
+    driver: bridge
+    name: forensic-test-network

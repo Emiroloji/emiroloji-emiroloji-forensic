@@ -1,0 +1,171 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Forensic Face Matching System Dashboard",
+    "tags": ["forensic", "face-matching"],
+    "style": "dark",
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "System Overview",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "up{job=\"gateway-service\"}",
+            "legendFormat": "Gateway Service"
+          },
+          {
+            "expr": "up{job=\"auth-service\"}",
+            "legendFormat": "Auth Service"
+          },
+          {
+            "expr": "up{job=\"case-service\"}",
+            "legendFormat": "Case Service"
+          },
+          {
+            "expr": "up{job=\"storage-service\"}",
+            "legendFormat": "Storage Service"
+          },
+          {
+            "expr": "up{job=\"audit-service\"}",
+            "legendFormat": "Audit Service"
+          },
+          {
+            "expr": "up{job=\"ai-service\"}",
+            "legendFormat": "AI Service"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{job}} - {{method}} {{endpoint}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 3,
+        "title": "Response Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "50th percentile"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        }
+      },
+      {
+        "id": 4,
+        "title": "Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{status=~\"5..\"}[5m])",
+            "legendFormat": "5xx Errors"
+          },
+          {
+            "expr": "rate(http_requests_total{status=~\"4..\"}[5m])",
+            "legendFormat": "4xx Errors"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        }
+      },
+      {
+        "id": 5,
+        "title": "Active Users",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{endpoint=\"/api/auth/signin\"}[5m]))",
+            "legendFormat": "Login Rate"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        }
+      },
+      {
+        "id": 6,
+        "title": "Face Analysis Metrics",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(face_detections_total[5m])",
+            "legendFormat": "Face Detections/sec"
+          },
+          {
+            "expr": "rate(face_comparisons_total[5m])",
+            "legendFormat": "Face Comparisons/sec"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        }
+      },
+      {
+        "id": 7,
+        "title": "Queue Metrics",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rabbitmq_queue_messages",
+            "legendFormat": "{{queue}} - Messages"
+          },
+          {
+            "expr": "rabbitmq_queue_consumers",
+            "legendFormat": "{{queue}} - Consumers"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 24
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s"
+  }
+}

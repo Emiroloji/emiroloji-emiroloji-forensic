@@ -1,0 +1,30 @@
+cluster.name: "forensic-cluster"
+node.name: "forensic-node-1"
+network.host: 0.0.0.0
+discovery.type: single-node
+
+# Security settings
+xpack.security.enabled: false
+xpack.security.enrollment.enabled: false
+
+# Memory settings
+bootstrap.memory_lock: true
+ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+
+# Index settings
+action.auto_create_index: true
+action.destructive_requires_name: true
+
+# Logging
+logger.level: INFO
+logger.org.elasticsearch.transport: WARN
+logger.org.elasticsearch.discovery: WARN
+
+# Performance settings
+indices.memory.index_buffer_size: 20%
+indices.queries.cache.size: 10%
+indices.fielddata.cache.size: 20%
+
+# Index lifecycle management
+xpack.ilm.enabled: true
+xpack.slm.enabled: true
