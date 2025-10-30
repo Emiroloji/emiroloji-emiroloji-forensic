@@ -4,16 +4,11 @@ FROM maven:3.9-eclipse-temurin-17 AS build
 # Set working directory
 WORKDIR /app
 
-# Copy pom.xml first for better layer caching
+# Copy all source files
 COPY pom.xml .
-
-# Download dependencies
-RUN mvn dependency:go-offline -B
-
-# Copy source code
 COPY src ./src
 
-# Build the application
+# Build the application (dependencies will be downloaded during build)
 RUN mvn clean package -DskipTests
 
 # Runtime stage

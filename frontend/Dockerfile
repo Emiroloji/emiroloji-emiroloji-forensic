@@ -51,6 +51,6 @@ EXPOSE 80
 # Next.js'in tüm IP'lere bağlanmasını sağlıyoruz
 ENV HOST 0.0.0.0
 
-# "pnpm start" komutu "next start" script'ini çalıştırır
-# Uygulamayı 80 portundan başlatıyoruz
-CMD ["next", "start", "-p", "80"]
+# npm start komutu "next start" script'ini çalıştırır
+# Uygulamayı 80 portundan başlatıyoruz  
+CMD ["npm", "start", "--", "-p", "80"]

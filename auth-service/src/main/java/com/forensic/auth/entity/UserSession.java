@@ -11,7 +11,7 @@ import java.util.UUID;
  * User Session entity for tracking user sessions
  */
 @Entity
-@Table(name = "user_sessions")
+@Table(name = "auth.user_sessions")
 @EntityListeners(AuditingEntityListener.class)
 public class UserSession {
 

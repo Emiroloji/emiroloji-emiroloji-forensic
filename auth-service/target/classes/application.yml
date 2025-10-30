@@ -21,9 +21,10 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
+        '[format_sql]': true
+        '[default_schema]': auth
         jdbc:
-          time_zone: UTC
+          '[time_zone]': UTC
     open-in-view: false
     
   data:

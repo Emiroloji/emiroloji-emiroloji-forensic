@@ -4,8 +4,8 @@
 -- Create database if not exists (this will be handled by Docker)
 -- CREATE DATABASE forensic_db;
 
--- Connect to the database
-\c forensic_db;
+-- Connect to the database - use current database
+-- \c forensic_db;
 
 -- Create extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

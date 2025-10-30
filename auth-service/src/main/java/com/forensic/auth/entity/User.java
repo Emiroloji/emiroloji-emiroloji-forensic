@@ -17,7 +17,7 @@ import java.util.Set;
  * Represents a user in the forensic system with roles and permissions
  */
 @Entity
-@Table(name = "users", uniqueConstraints = {
+@Table(name = "auth.users", uniqueConstraints = {
         @UniqueConstraint(columnNames = "username"),
         @UniqueConstraint(columnNames = "email")
 })
@@ -60,7 +60,7 @@ public class User {
 
     @ElementCollection(targetClass = Role.class, fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
-    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @CollectionTable(name = "auth.user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")
     private Set<Role> roles;
 
