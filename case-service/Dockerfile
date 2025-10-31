@@ -1,5 +1,5 @@
 # Multi-stage build for Case Service
-FROM maven:3.9-eclipse-temurin-17 AS build
+FROM maven:3.9-eclipse-temurin-17 AS builder
 
 # Set working directory
 WORKDIR /app
@@ -26,7 +26,7 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 WORKDIR /app
 
 # Copy the built jar from build stage
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=builder /app/target/*.jar app.jar
 
 # Create logs directory
 RUN mkdir -p logs && chown -R appuser:appuser /app
