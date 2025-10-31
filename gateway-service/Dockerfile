@@ -14,8 +14,11 @@ COPY src ./src
 # Build the application
 RUN mvn clean package -DskipTests
 
+# Find and rename the built jar for consistent naming
+RUN mv target/*.jar target/app.jar
+
 # Expose port
 EXPOSE 8080
 
 # Run the application
-ENTRYPOINT ["java", "-jar", "target/*.jar"]
+ENTRYPOINT ["java", "-jar", "target/app.jar"]

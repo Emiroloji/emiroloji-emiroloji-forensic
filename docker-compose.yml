@@ -30,15 +30,17 @@ services:
     container_name: auth-service
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/forensic_auth
-      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
-      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRATION_MS=3600000
       - JWT_REFRESH_EXPIRATION_MS=604800000
     depends_on:
-      - eureka-server
-      - postgres-db
+      postgres-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
     networks:
       - forensic-net
 
@@ -63,15 +65,18 @@ services:
     container_name: case-service
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/forensic_cases
-      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
-      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
       - JWT_SECRET=${JWT_SECRET}
       - AI_SERVICE_URL=http://ai-service:8000
     depends_on:
-      - eureka-server
-      - postgres-db
-      - ai-service
+      postgres-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      ai-service:
+        condition: service_started
     networks:
       - forensic-net
 
@@ -82,8 +87,8 @@ services:
     container_name: storage-service
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/forensic_storage
-      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER}
-      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
       - JWT_SECRET=${JWT_SECRET}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
@@ -91,9 +96,12 @@ services:
       - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
       - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
     depends_on:
-      - eureka-server
-      - postgres-db
-      - minio
+      postgres-db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
     networks:
       - forensic-net
 
@@ -104,11 +112,15 @@ services:
     container_name: audit-service
     environment:
       - SPRING_DATA_MONGODB_URI=mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongodb-db:27017/forensic_audit?authSource=admin
+      - MONGO_ROOT_USER=${MONGO_ROOT_USER}
+      - MONGO_ROOT_PASSWORD=${MONGO_ROOT_PASSWORD}
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
       - JWT_SECRET=${JWT_SECRET}
     depends_on:
-      - eureka-server
-      - mongodb-db
+      mongodb-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
     networks:
       - forensic-net
 
@@ -143,6 +155,11 @@ services:
       - "5432:5432"
     networks:
       - forensic-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   mongodb-db:
     image: mongo:latest
@@ -157,6 +174,11 @@ services:
       - "27017:27017"
     networks:
       - forensic-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   minio:
     image: minio/minio:latest
@@ -172,6 +194,11 @@ services:
     command: server /data --console-address ":9001"
     networks:
       - forensic-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:3-management

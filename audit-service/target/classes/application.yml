@@ -1,5 +1,5 @@
 server:
-  port: 8085
+  port: 8084
 
 spring:
   application:
@@ -10,10 +10,10 @@ spring:
   
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/forensic_audit}
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://mongodb-db:27017/forensic_audit}
       database: ${MONGODB_DATABASE:forensic_audit}
-      username: ${MONGODB_USERNAME:forensic_user}
-      password: ${MONGODB_PASSWORD:forensic_secure_password_2024}
+      username: ${MONGO_ROOT_USER:mongoadmin}
+      password: ${MONGO_ROOT_PASSWORD:MongoSecure2024!}
       authentication-database: ${MONGODB_AUTH_DATABASE:admin}
 
 # Management endpoints

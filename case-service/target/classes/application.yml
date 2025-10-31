@@ -1,13 +1,13 @@
 server:
-  port: 8083
+  port: 8082
 
 spring:
   application:
-    name: Case Service
+    name: case-service
   datasource:
-    url: jdbc:postgresql://postgres:5432/forensic_db
-    username: postgres
-    password: postgres123
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres-db:5432/forensic_cases}
+    username: ${POSTGRES_USER:forensic_user}
+    password: ${POSTGRES_PASSWORD:ForensicSecure2024!}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -17,10 +17,11 @@ spring:
 
 eureka:
   client:
-    service-url:
-      defaultZone: http://gateway-service:8080/eureka
+    serviceUrl:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka-server:8761/eureka/}
   instance:
     prefer-ip-address: true
+    hostname: case-service
 
 logging:
   level:

@@ -342,17 +342,18 @@ GROUP BY c.id, c.case_number, c.title, c.status, c.priority, c.classification, c
 -- SECURITY POLICIES (Row Level Security)
 -- =============================================
 
--- Enable RLS on sensitive tables
-ALTER TABLE auth.users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE cases.cases ENABLE ROW LEVEL SECURITY;
-ALTER TABLE cases.face_comparisons ENABLE ROW LEVEL SECURITY;
-ALTER TABLE storage.files ENABLE ROW LEVEL SECURITY;
+-- Enable RLS on sensitive tables (commented out for now - configure after deployment)
+-- ALTER TABLE auth.users ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE cases.cases ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE cases.face_comparisons ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE storage.files ENABLE ROW LEVEL SECURITY;
 
 -- Create policies (basic examples - expand as needed)
-CREATE POLICY user_access_policy ON auth.users
-    FOR ALL TO authenticated
-    USING (id = current_setting('app.current_user_id')::uuid OR 
-           EXISTS (SELECT 1 FROM auth.user_roles WHERE user_id = current_setting('app.current_user_id')::uuid AND role = 'ADMIN'));
+-- Note: Policies are commented out for initial setup
+-- CREATE POLICY user_access_policy ON auth.users
+--     FOR ALL TO authenticated
+--     USING (id = current_setting('app.current_user_id')::uuid OR 
+--            EXISTS (SELECT 1 FROM auth.user_roles WHERE user_id = current_setting('app.current_user_id')::uuid AND role = 'ADMIN'));
 
 -- =============================================
 -- FUNCTIONS FOR AUDIT CHAIN
