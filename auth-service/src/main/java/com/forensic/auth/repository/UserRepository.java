@@ -145,22 +145,19 @@ public interface UserRepository extends JpaRepository<User, String> {
         /**
          * Find users with specific permissions (custom query based on role permissions)
          */
-        @Query("SELECT DISTINCT u FROM User u JOIN u.roles r WHERE r IN (" +
-                        "SELECT r2 FROM Role r2 WHERE r2 IN ('ADMIN', 'INVESTIGATOR'))")
+        @Query("SELECT DISTINCT u FROM User u JOIN u.roles r WHERE r IN ('ADMIN', 'INVESTIGATOR')")
         List<User> findUsersWithCaseManagementPermissions();
 
         /**
          * Find users with analysis permissions
          */
-        @Query("SELECT DISTINCT u FROM User u JOIN u.roles r WHERE r IN (" +
-                        "SELECT r2 FROM Role r2 WHERE r2 IN ('ADMIN', 'INVESTIGATOR', 'ANALYST'))")
+        @Query("SELECT DISTINCT u FROM User u JOIN u.roles r WHERE r IN ('ADMIN', 'INVESTIGATOR', 'ANALYST')")
         List<User> findUsersWithAnalysisPermissions();
 
         /**
          * Find users with audit permissions
          */
-        @Query("SELECT DISTINCT u FROM User u JOIN u.roles r WHERE r IN (" +
-                        "SELECT r2 FROM Role r2 WHERE r2 IN ('ADMIN', 'AUDITOR'))")
+        @Query("SELECT DISTINCT u FROM User u JOIN u.roles r WHERE r IN ('ADMIN', 'AUDITOR')")
         List<User> findUsersWithAuditPermissions();
 
 }
