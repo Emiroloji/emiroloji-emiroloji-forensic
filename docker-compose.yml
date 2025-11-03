@@ -66,7 +66,11 @@ services:
     networks:
       - forensic-net
     healthcheck: # DÜZELTME: ai-service'in de sağlıklı olması beklenmeli
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8000 || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          'python -c "import urllib.request; urllib.request.urlopen(''http://localhost:8000/health'')"',
+        ]
       interval: 10s
       timeout: 5s
       retries: 30
@@ -77,19 +81,32 @@ services:
       dockerfile: Dockerfile
     container_name: case-service
     environment:
+      - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/forensic_db
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
       - JWT_SECRET=${JWT_SECRET}
-      - AI_SERVICE_URL=http://ai-service:8000
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+    ports:
+      - "8082:8082"
     depends_on:
       postgres-db:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
-      ai-service:
-        condition: service_healthy # DÜZELTME: 'service_started' -> 'service_healthy'
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - forensic-net
 
@@ -134,6 +151,12 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - forensic-net
 
@@ -163,8 +186,8 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-      - ./scripts/migrations:/docker-entrypoint-initdb.d/migrations
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql
+      - ./scripts/migrations/V1__Initial_Schema.sql:/docker-entrypoint-initdb.d/02-migrations.sql
     ports:
       - "5432:5432"
     networks:

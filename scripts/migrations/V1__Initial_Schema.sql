@@ -159,7 +159,10 @@ CREATE TABLE IF NOT EXISTS storage.files (
     access_count INTEGER DEFAULT 0,
     metadata JSONB,
     virus_scan_status VARCHAR(20) DEFAULT 'PENDING' CHECK (virus_scan_status IN ('PENDING', 'CLEAN', 'INFECTED', 'ERROR')),
-    virus_scan_date TIMESTAMP WITH TIME ZONE
+    virus_scan_date TIMESTAMP WITH TIME ZONE,
+    file_status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (file_status IN ('ACTIVE', 'DELETED', 'ARCHIVED')),
+    deleted_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- File versions
@@ -272,8 +275,11 @@ END;
 $$ language 'plpgsql';
 
 -- Apply triggers to tables with updated_at columns
+DROP TRIGGER IF EXISTS update_users_updated_at ON auth.users;
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON auth.users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_cases_updated_at ON cases.cases;
 CREATE TRIGGER update_cases_updated_at BEFORE UPDATE ON cases.cases FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS update_face_comparisons_updated_at ON cases.face_comparisons;
 CREATE TRIGGER update_face_comparisons_updated_at BEFORE UPDATE ON cases.face_comparisons FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =============================================
