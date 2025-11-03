@@ -2,12 +2,18 @@ services:
   eureka-server:
     image: steeltoeoss/eureka-server:latest
     container_name: eureka-server
+    platform: linux/amd64 # Apple Silicon (M1/M2/M3) uyumluluğu için
     ports:
       - "8761:8761"
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
     networks:
       - forensic-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8761 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
 
   gateway-service:
     build:
@@ -19,7 +25,8 @@ services:
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
     depends_on:
-      - eureka-server
+      eureka-server:
+        condition: service_healthy
     networks:
       - forensic-net
 
@@ -36,13 +43,11 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
       - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRATION_MS=3600000
-      - JWT_REFRESH_EXPIRATION_MS=604800000
     depends_on:
       postgres-db:
         condition: service_healthy
       eureka-server:
-        condition: service_started
+        condition: service_healthy
     networks:
       - forensic-net
 
@@ -56,9 +61,15 @@ services:
     environment:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
     depends_on:
-      - eureka-server
+      eureka-server:
+        condition: service_healthy
     networks:
       - forensic-net
+    healthcheck: # DÜZELTME: ai-service'in de sağlıklı olması beklenmeli
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
 
   case-service:
     build:
@@ -66,9 +77,9 @@ services:
       dockerfile: Dockerfile
     container_name: case-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/forensic_cases
-      - POSTGRES_USER=${POSTGRES_USER}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/forensic_db
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
       - JWT_SECRET=${JWT_SECRET}
       - AI_SERVICE_URL=http://ai-service:8000
@@ -76,9 +87,9 @@ services:
       postgres-db:
         condition: service_healthy
       eureka-server:
-        condition: service_started
+        condition: service_healthy
       ai-service:
-        condition: service_started
+        condition: service_healthy # DÜZELTME: 'service_started' -> 'service_healthy'
     networks:
       - forensic-net
 
@@ -88,7 +99,7 @@ services:
       dockerfile: Dockerfile
     container_name: storage-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/forensic_storage
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/forensic_db # <-- DÜZELTİLDİ
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
@@ -103,7 +114,7 @@ services:
       minio:
         condition: service_healthy
       eureka-server:
-        condition: service_started
+        condition: service_healthy
     networks:
       - forensic-net
 
@@ -122,7 +133,7 @@ services:
       mongodb-db:
         condition: service_healthy
       eureka-server:
-        condition: service_started
+        condition: service_healthy
     networks:
       - forensic-net
 
@@ -131,14 +142,15 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://localhost:8080 # <-- BU SATIRI DEĞİŞTİRİN
+        - NEXT_PUBLIC_API_URL=http://localhost:8080
     container_name: frontend
     ports:
       - "3000:80"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8080 # <-- BU SATIRI DEĞİŞTİRİN
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
     depends_on:
-      - gateway-service
+      gateway-service: # Gateway'in başlamasını beklesin
+        condition: service_started
     networks:
       - forensic-net
 
@@ -146,7 +158,7 @@ services:
     image: postgres:13-alpine
     container_name: postgres-db
     environment:
-      - POSTGRES_DB=forensic_auth
+      - POSTGRES_DB=forensic_db
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
@@ -215,64 +227,11 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
       - forensic-net
-
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
-      - "--web.console.libraries=/etc/prometheus/console_libraries"
-      - "--web.console.templates=/etc/prometheus/consoles"
-      - "--storage.tsdb.retention.time=200h"
-      - "--web.enable-lifecycle"
-    networks:
-      - forensic-net
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    ports:
-      - "3001:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
-      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
-    networks:
-      - forensic-net
-
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
-    container_name: elasticsearch
-    environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ports:
-      - "9200:9200"
-    volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-    networks:
-      - forensic-net
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:8.11.0
-    container_name: kibana
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-    ports:
-      - "5601:5601"
-    depends_on:
-      - elasticsearch
-    networks:
-      - forensic-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping", "-q"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   nginx:
     image: nginx:alpine
@@ -289,14 +248,82 @@ services:
     networks:
       - forensic-net
 
+  # --- GEREKSİZ SERVİSLER (Monitoring & Logging) ---
+  # Sistem çalıştıktan sonra bu servisleri eklersin.
+  # Şimdilik kapalı kalmaları daha hızlı ve hatasız başlamanı sağlar.
+
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+  #     - prometheus_data:/prometheus
+  #   command:
+  #     - "--config.file=/etc/prometheus/prometheus.yml"
+  #     - "--storage.tsdb.path=/prometheus"
+  #     - "--web.console.libraries=/etc/prometheus/console_libraries"
+  #     - "--web.console.templates=/etc/prometheus/consoles"
+  #     - "--storage.tsdb.retention.time=200h"
+  #     - "--web.enable-lifecycle"
+  #   networks:
+  #     - forensic-net
+
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: grafana
+  #   ports:
+  #     - "3001:3000"
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+  #   volumes:
+  #     - grafana_data:/var/lib/grafana
+  #     - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+  #     - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+  #   networks:
+  #     - forensic-net
+
+  # elasticsearch:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+  #   container_name: elasticsearch
+  #   environment:
+  #     - discovery.type=single-node
+  #     - xpack.security.enabled=false
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #   ports:
+  #     - "9200:9200"
+  #   volumes:
+  #     - elasticsearch_data:/usr/share/elasticsearch/data
+  #   networks:
+  #     - forensic-net
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s"]
+  #     interval: 10s
+  #     timeout: 10s
+  #     retries: 10
+
+  # kibana:
+  #   image: docker.elastic.co/kibana/kibana:8.11.0
+  #   container_name: kibana
+  #   environment:
+  #     - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+  #   ports:
+  #     - "5601:5601"
+  #   depends_on:
+  #     elasticsearch:
+  #       condition: service_healthy
+  #   networks:
+  #     - forensic-net
+
 volumes:
   postgres_data:
   mongodb_data:
   minio_data:
   rabbitmq_data:
-  prometheus_data:
-  grafana_data:
-  elasticsearch_data:
+  # prometheus_data: # Kapalı
+  # grafana_data: # Kapalı
+  # elasticsearch_data: # Kapalı
 
 networks:
   forensic-net:

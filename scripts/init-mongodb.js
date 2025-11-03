@@ -74,7 +74,7 @@ db.createCollection('audit_events', {
                     description: 'When the event occurred'
                 },
                 previousHash: {
-                    bsonType: 'string',
+                    bsonType: ['string', 'null'],
                     description: 'Hash of previous event for chain integrity'
                 },
                 currentHash: {

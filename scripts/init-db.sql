@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS auth.users (
     failed_login_attempts INTEGER DEFAULT 0,
     account_locked_until TIMESTAMP WITH TIME ZONE,
     password_changed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    deleted_at TIMESTAMP WITH TIME ZONE, -- <-- BU SATIRI EKLE
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -95,7 +96,8 @@ CREATE TABLE IF NOT EXISTS cases.cases (
     incident_date DATE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    closed_at TIMESTAMP WITH TIME ZONE
+    closed_at TIMESTAMP WITH TIME ZONE,
+    deleted_at TIMESTAMP WITH TIME ZONE -- <-- BU SATIRI EKLE
 );
 
 -- Case participants
@@ -164,7 +166,8 @@ CREATE TABLE IF NOT EXISTS storage.files (
     access_count INTEGER DEFAULT 0,
     metadata JSONB,
     virus_scan_status VARCHAR(20) DEFAULT 'PENDING' CHECK (virus_scan_status IN ('PENDING', 'CLEAN', 'INFECTED', 'ERROR')),
-    virus_scan_date TIMESTAMP WITH TIME ZONE
+    virus_scan_date TIMESTAMP WITH TIME ZONE,
+    deleted_at TIMESTAMP WITH TIME ZONE -- <-- BU SATIRI EKLE
 );
 
 -- File versions
