@@ -104,27 +104,57 @@ class ApiService {
   }
 
   // Auth endpoints
-  async signIn(username: string, password: string) {
-    const response = await this.request<LoginResponse>("/auth/signin", {
-      method: "POST",
-      body: JSON.stringify({ username, password }),
-    })
+    // Auth endpoints
+    async signIn(username: string, password: string): Promise<ApiResponse<LoginResponse>> {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/signin`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ username, password }),
+            })
 
-    if (response.data) {
-      localStorage.setItem("accessToken", response.data.accessToken)
-      localStorage.setItem("refreshToken", response.data.refreshToken)
-      localStorage.setItem("user", JSON.stringify(response.data.user))
+            const data = await response.json() // Hata bile olsa JSON'u oku
+
+            if (!response.ok) {
+                // Backend'den gelen hatayı göster
+                return { error: data.message || "Login failed" }
+            }
+
+            // Başarılıysa, token'ları localStorage'a kaydet
+            localStorage.setItem("accessToken", data.accessToken)
+            localStorage.setItem("refreshToken", data.refreshToken)
+            localStorage.setItem("user", JSON.stringify(data.user))
+            return { data }
+        } catch (error) {
+            return { error: error instanceof Error ? error.message : "Network error" }
+        }
     }
 
-    return response
-  }
+    async signUp(data: RegisterRequest): Promise<ApiResponse<{ message: string }>> {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            })
 
-  async signUp(data: RegisterRequest) {
-    return this.request<{ message: string }>("/auth/signup", {
-      method: "POST",
-      body: JSON.stringify(data),
-    })
-  }
+            const responseData = await response.json() // JSON'u oku
+
+            if (!response.ok) {
+                return { error: responseData.message || "Signup failed" }
+            }
+
+            return { data: responseData }
+        } catch (error) {
+            return { error: error instanceof Error ? error.message : "Network error" }
+        }
+    }
+
+    // Case endpoints (Burası devam ediyor...)
 
   // Case endpoints
   async getCases(page = 0, size = 10) {

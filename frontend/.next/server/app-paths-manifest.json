@@ -1,12 +1,4 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/dashboard/cases/new/page": "app/dashboard/cases/new/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/cases/page": "app/dashboard/cases/page.js",
-  "/dashboard/audit/page": "app/dashboard/audit/page.js",
-  "/login/page": "app/login/page.js",
-  "/dashboard/analysis/page": "app/dashboard/analysis/page.js",
-  "/signup/page": "app/signup/page.js",
   "/page": "app/page.js",
-  "/dashboard/files/page": "app/dashboard/files/page.js"
+  "/login/page": "app/login/page.js"
 }

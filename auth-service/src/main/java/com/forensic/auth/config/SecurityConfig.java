@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -77,6 +78,8 @@ public class SecurityConfig {
         @Bean
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
                 http
+
+                                 .cors(Customizer.withDefaults()) // <--- BU SATIRI EKLE
                                 // Disable CSRF for stateless JWT authentication
                                 .csrf(AbstractHttpConfigurer::disable)
 
@@ -132,45 +135,33 @@ public class SecurityConfig {
                 return http.build();
         }
 
-        @Bean
-        public CorsConfigurationSource corsConfigurationSource() {
-                CorsConfiguration configuration = new CorsConfiguration();
+    // SecurityConfig sınıfının içine, filterChain'in altına ekle
 
-                // Allow specific origins (configure for production)
-                configuration.setAllowedOriginPatterns(List.of(
-                                "http://localhost:3000",
-                                "https://localhost:3000",
-                                "http://localhost:8080",
-                                "https://localhost:8080"));
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
 
-                // Allow specific methods
-                configuration.setAllowedMethods(Arrays.asList(
-                                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        // Frontend'in adresini buraya yazıyoruz. "*" (herkese izin ver) KULLANMA.
+        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
 
-                // Allow specific headers
-                configuration.setAllowedHeaders(Arrays.asList(
-                                "Authorization",
-                                "Content-Type",
-                                "X-Requested-With",
-                                "Accept",
-                                "Origin",
-                                "Access-Control-Request-Method",
-                                "Access-Control-Request-Headers"));
+        // İzin verilen HTTP metotları
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
-                // Allow credentials
-                configuration.setAllowCredentials(true);
+        // İzin verilen HTTP başlıkları (Authorization: Bearer token için şart)
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
 
-                // Expose headers
-                configuration.setExposedHeaders(Arrays.asList(
-                                "Authorization",
-                                "X-Total-Count"));
+        // Tarayıcının token (Credentials) göndermesine izin ver
+        configuration.setAllowCredentials(true);
 
-                // Cache preflight response for 1 hour
-                configuration.setMaxAge(3600L);
+        // Tarayıcının bu ayarları ne kadar süre cache'lemesi gerektiği
+        configuration.setMaxAge(3600L);
 
-                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-                source.registerCorsConfiguration("/**", configuration);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // Tüm /api/ altındaki yollara bu CORS ayarlarını uygula
+        source.registerCorsConfiguration("/api/**", configuration);
 
-                return source;
-        }
+        return source;
+    }
+
+
 }
