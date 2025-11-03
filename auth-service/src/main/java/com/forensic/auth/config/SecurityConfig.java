@@ -142,7 +142,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // Frontend'in adresini buraya yazıyoruz. "*" (herkese izin ver) KULLANMA.
-        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        configuration.setAllowedOrigins(List.of("http://localhost:3001"));
 
         // İzin verilen HTTP metotları
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
