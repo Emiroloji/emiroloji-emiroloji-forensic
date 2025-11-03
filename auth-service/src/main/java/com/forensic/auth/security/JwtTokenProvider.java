@@ -46,12 +46,7 @@ public class JwtTokenProvider {
         return generateTokenFromUsername(userPrincipal.getUsername());
     }
 
-    /**
-     * Generate JWT token from authentication
-     */
-    public String generateJwtToken(Authentication authentication) {
-        return generateToken(authentication);
-    }
+
 
     /**
      * Generate JWT token from username with custom claims
@@ -73,12 +68,7 @@ public class JwtTokenProvider {
         return createToken(claims, username, jwtRefreshExpirationMs);
     }
 
-    /**
-     * Generate refresh token
-     */
-    public String generateRefreshTokenFromUsername(String username) {
-        return generateRefreshToken(username);
-    }
+
 
     /**
      * Create JWT token with claims
@@ -113,12 +103,7 @@ public class JwtTokenProvider {
         return getClaimFromToken(token, Claims::getSubject);
     }
 
-    /**
-     * Extract username from token
-     */
-    public String getUserNameFromJwtToken(String token) {
-        return getUsernameFromToken(token);
-    }
+
 
     /**
      * Extract expiration date from token
@@ -191,12 +176,7 @@ public class JwtTokenProvider {
         return false;
     }
 
-    /**
-     * Validate token without user details
-     */
-    public Boolean validateJwtToken(String token) {
-        return validateToken(token);
-    }
+
 
     /**
      * Get token type (access or refresh)

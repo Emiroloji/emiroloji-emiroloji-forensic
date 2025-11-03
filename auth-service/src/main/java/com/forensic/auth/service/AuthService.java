@@ -1,9 +1,7 @@
 package com.forensic.auth.service;
 
-// --- DÜZELTME: EKSİK IMPORTLARI EKLE ---
-import com.forensic.auth.dto.LoginRequest;
-import com.forensic.auth.dto.LoginResponse;
-import com.forensic.auth.dto.RegisterRequest;
+
+import com.forensic.auth.dto.*;
 import com.forensic.auth.entity.Role;
 import com.forensic.auth.entity.User;
 import com.forensic.auth.entity.UserStatus;
@@ -12,6 +10,7 @@ import com.forensic.auth.repository.UserRepository;
 import com.forensic.auth.repository.UserSessionRepository;
 import com.forensic.auth.security.JwtTokenProvider;
 import com.forensic.auth.service.UserDetailsServiceImpl.UserPrincipal;
+import com.forensic.auth.service.UserDetailsServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +19,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +44,7 @@ public class AuthService {
     @Autowired
     private UserSessionRepository userSessionRepository;
 
-    // --- DÜZELTME: EKSİK BAĞIMLILIKLARI EKLE ---
+
     @Autowired
     private AuthenticationManager authenticationManager;
 
@@ -56,14 +56,14 @@ public class AuthService {
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
-    // --- DÜZELTME SONU ---
 
-    // --- DÜZELTME: EKSİK METOTLARI EKLE ---
+
+    // --- Authentication ---
 
     /**
      * Authenticate user and return JWT
      */
-    public LoginResponse authenticateUser(LoginRequest loginRequest) {
+    public LoginResponse authenticateUser(LoginRequest loginRequest, String ipAddress, String userAgent) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
@@ -74,22 +74,25 @@ public class AuthService {
             String accessToken = jwtTokenProvider.generateToken(authentication);
             String refreshToken = jwtTokenProvider.generateRefreshToken(userPrincipal.getUsername());
 
-            // Kullanıcı bilgilerini al (ID'nin String olduğunu varsayarak)
             User user = userRepository.findById(userPrincipal.getId())
                     .orElseThrow(() -> new RuntimeException("User not found after authentication"));
 
-            // Oturum (Session) oluştur
-            // TODO: IP ve UserAgent bilgilerini Controller'dan (HttpServletRequest) alıp
-            // buraya ilet
+            UUID userId;
+            try {
+                userId = UUID.fromString(user.getId());
+            } catch (IllegalArgumentException e) {
+                logger.error("Invalid UUID format for user ID: {}", user.getId());
+                throw new RuntimeException("Invalid user ID format", e);
+            }
+
             String sessionId = createSession(
-                    UUID.fromString(user.getId()), // User ID'si (String) UUID'ye çevriliyor.
+                    userId,
                     accessToken,
                     refreshToken,
-                    "UNKNOWN_IP", // Geçici değer
-                    "UNKNOWN_AGENT" // Geçici değer
+                    ipAddress,
+                    userAgent
             );
 
-            // Son giriş tarihini güncelle
             user.setLastLogin(LocalDateTime.now());
             userRepository.save(user);
 
@@ -122,9 +125,8 @@ public class AuthService {
         }
     }
 
-    /**
-     * Register a new user
-     */
+    // --- User / Registration / Profile related methods ---
+
     public User registerUser(RegisterRequest registerRequest) {
         if (userRepository.existsByUsername(registerRequest.getUsername())) {
             throw new RuntimeException("Error: Username is already taken!");
@@ -142,22 +144,145 @@ public class AuthService {
                 registerRequest.getFirstName(),
                 registerRequest.getLastName());
 
-        // Rolleri ayarla
+        // Set roles
         Set<Role> roles = new HashSet<>();
         if (registerRequest.getRoles() == null || registerRequest.getRoles().isEmpty()) {
-            roles.add(Role.VIEWER); // Varsayılan rol
+            roles.add(Role.VIEWER);
         } else {
-            // Gelen List<Role>'i Set<Role>'e çevir
             roles.addAll(registerRequest.getRoles());
         }
         user.setRoles(roles);
-        user.setStatus(UserStatus.ACTIVE); // Yeni kullanıcıyı varsayılan olarak aktif yap
+        user.setStatus(UserStatus.ACTIVE);
 
         User savedUser = userRepository.save(user);
         logger.info("User registered successfully: {}", savedUser.getUsername());
         return savedUser;
     }
-    // --- DÜZELTME SONU ---
+
+    public LoginResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
+        String refreshToken = refreshTokenRequest.getRefreshToken();
+
+        if (!jwtTokenProvider.validateToken(refreshToken) || !jwtTokenProvider.isRefreshToken(refreshToken)) {
+            throw new RuntimeException("Invalid refresh token");
+        }
+
+        String username = jwtTokenProvider.getUsernameFromToken(refreshToken);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        String newAccessToken = jwtTokenProvider.generateTokenFromUsername(username);
+
+        userSessionRepository.findByRefreshToken(refreshToken)
+                .ifPresent(session -> {
+                    session.setSessionToken(newAccessToken);
+                    userSessionRepository.save(session);
+                });
+
+        // Build a UserDetails-like object from User entity (using existing UserPrincipal)
+        UserDetails userDetails = new UserDetailsServiceImpl.UserPrincipal(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getPassword(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getStatus(),
+                user.getRoles().stream().map(role -> (GrantedAuthority) () -> "ROLE_" + role.name()).collect(Collectors.toList()),
+                user.isTwoFactorEnabled(),
+                user.getLastLogin(),
+                user.getCreatedAt()
+        );
+
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+
+        LoginResponse.UserInfo userInfo = new LoginResponse.UserInfo(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getStatus().name(),
+                roles,
+                user.isTwoFactorEnabled(),
+                user.getLastLogin());
+
+        String sessionId = userSessionRepository.findByRefreshToken(refreshToken)
+                .map(s -> s.getId().toString())
+                .orElse(null);
+
+        return new LoginResponse(
+                newAccessToken,
+                refreshToken,
+                "Bearer",
+                jwtTokenProvider.getTimeUntilExpiration(newAccessToken),
+                userInfo,
+                sessionId);
+    }
+
+    public LoginResponse.UserInfo getUserProfile(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<String> roles = user.getRoles().stream()
+                .map(role -> "ROLE_" + role.name())
+                .collect(Collectors.toList());
+
+        return new LoginResponse.UserInfo(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getStatus().name(),
+                roles,
+                user.isTwoFactorEnabled(),
+                user.getLastLogin());
+    }
+
+    public User updateUserProfile(String userId, UpdateProfileRequest updateProfileRequest) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setFirstName(updateProfileRequest.getFirstName());
+        user.setLastName(updateProfileRequest.getLastName());
+        user.setEmail(updateProfileRequest.getEmail());
+        // Password updates should be separate
+
+        return userRepository.save(user);
+    }
+
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public User getUserById(String id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    public User updateUserById(String id, UpdateUserRequest updateUserRequest) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setFirstName(updateUserRequest.getFirstName());
+        user.setLastName(updateUserRequest.getLastName());
+        user.setEmail(updateUserRequest.getEmail());
+        user.setUsername(updateUserRequest.getUsername());
+        user.setStatus(UserStatus.valueOf(updateUserRequest.getStatus()));
+        if (updateUserRequest.getRoles() != null) {
+            user.setRoles(new HashSet<>(updateUserRequest.getRoles()));
+        }
+
+        return userRepository.save(user);
+    }
+
+    public void deleteUserById(String id) {
+        userRepository.deleteById(id);
+    }
+
+    // --- Session management ---
 
     /**
      * Create a new user session

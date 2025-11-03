@@ -41,127 +41,136 @@ import java.util.List;
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
-    @Autowired
-    private UserDetailsServiceImpl userDetailsService;
+        @Autowired
+        private UserDetailsServiceImpl userDetailsService;
 
-    @Autowired
-    private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+        @Autowired
+        private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
-    @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+        @Autowired
+        private JwtTokenProvider jwtTokenProvider;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12); // High strength for forensic system
-    }
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder(12); // High strength for forensic system
+        }
 
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        authProvider.setHideUserNotFoundExceptions(false); // Don't hide user not found for security
-        return authProvider;
-    }
+        @Bean
+        public DaoAuthenticationProvider authenticationProvider() {
+                DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+                authProvider.setUserDetailsService(userDetailsService);
+                authProvider.setPasswordEncoder(passwordEncoder());
+                authProvider.setHideUserNotFoundExceptions(true); // Don't hide user not found for security
+                return authProvider;
+        }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
+        @Bean
+        public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+                return config.getAuthenticationManager();
+        }
 
-    @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService);
-    }
+        @Bean
+        public JwtAuthenticationFilter jwtAuthenticationFilter() {
+                return new JwtAuthenticationFilter(jwtTokenProvider, userDetailsService);
+        }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                // Disable CSRF for stateless JWT authentication
-                .csrf(AbstractHttpConfigurer::disable)
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+                http
+                                // Disable CSRF for stateless JWT authentication
+                                .csrf(AbstractHttpConfigurer::disable)
 
-                // Configure CORS
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                                // Configure CORS
+                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // Configure exception handling
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(jwtAuthenticationEntryPoint))
+                                // Configure exception handling
+                                .exceptionHandling(exception -> exception
+                                                .authenticationEntryPoint(jwtAuthenticationEntryPoint))
 
-                // Configure session management
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                // Configure session management
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                // Configure authorization
-                .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
-                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh").permitAll()
-                        .requestMatchers("/api/auth/forgot-password", "/api/auth/reset-password").permitAll()
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                                // Configure authorization
+                                .authorizeHttpRequests(auth -> auth
+                                                // Public endpoints
+                                                .requestMatchers("/api/auth/signin", "/api/auth/signup",
+                                                                "/api/auth/refresh")
+                                                .permitAll()
+                                                .requestMatchers("/api/auth/forgot-password",
+                                                                "/api/auth/reset-password")
+                                                .permitAll()
+                                                .requestMatchers("/actuator/health", "/actuator/info",
+                                                                "/actuator/prometheus")
+                                                .permitAll()
+                                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**",
+                                                                "/swagger-ui.html")
+                                                .permitAll()
 
-                        // Admin only endpoints
-                        .requestMatchers("/api/auth/admin/**").hasRole("ADMIN")
+                                                // Admin only endpoints
+                                                .requestMatchers("/api/auth/admin/**").hasRole("ADMIN")
 
-                        // User management endpoints
-                        .requestMatchers("/api/auth/users/**").hasAnyRole("ADMIN", "INVESTIGATOR")
+                                                // User management endpoints
+                                                .requestMatchers("/api/auth/users/**")
+                                                .hasAnyRole("ADMIN", "INVESTIGATOR")
 
-                        // Profile endpoints
-                        .requestMatchers("/api/auth/profile/**").authenticated()
+                                                // Profile endpoints
+                                                .requestMatchers("/api/auth/profile/**").authenticated()
 
-                        // 2FA endpoints
-                        .requestMatchers("/api/auth/2fa/**").authenticated()
+                                                // 2FA endpoints
+                                                .requestMatchers("/api/auth/2fa/**").authenticated()
 
-                        // All other requests require authentication
-                        .anyRequest().authenticated())
+                                                // All other requests require authentication
+                                                .anyRequest().authenticated())
 
-                // Add JWT filter
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                                // Add JWT filter
+                                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
 
-                // Configure authentication provider
-                .authenticationProvider(authenticationProvider());
+                                // Configure authentication provider
+                                .authenticationProvider(authenticationProvider());
 
-        return http.build();
-    }
+                return http.build();
+        }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration configuration = new CorsConfiguration();
 
-        // Allow specific origins (configure for production)
-        configuration.setAllowedOriginPatterns(List.of(
-                "http://localhost:3000",
-                "https://localhost:3000",
-                "http://localhost:8080",
-                "https://localhost:8080"));
+                // Allow specific origins (configure for production)
+                configuration.setAllowedOriginPatterns(List.of(
+                                "http://localhost:3000",
+                                "https://localhost:3000",
+                                "http://localhost:8080",
+                                "https://localhost:8080"));
 
-        // Allow specific methods
-        configuration.setAllowedMethods(Arrays.asList(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+                // Allow specific methods
+                configuration.setAllowedMethods(Arrays.asList(
+                                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
 
-        // Allow specific headers
-        configuration.setAllowedHeaders(Arrays.asList(
-                "Authorization",
-                "Content-Type",
-                "X-Requested-With",
-                "Accept",
-                "Origin",
-                "Access-Control-Request-Method",
-                "Access-Control-Request-Headers"));
+                // Allow specific headers
+                configuration.setAllowedHeaders(Arrays.asList(
+                                "Authorization",
+                                "Content-Type",
+                                "X-Requested-With",
+                                "Accept",
+                                "Origin",
+                                "Access-Control-Request-Method",
+                                "Access-Control-Request-Headers"));
 
-        // Allow credentials
-        configuration.setAllowCredentials(true);
+                // Allow credentials
+                configuration.setAllowCredentials(true);
 
-        // Expose headers
-        configuration.setExposedHeaders(Arrays.asList(
-                "Authorization",
-                "X-Total-Count"));
+                // Expose headers
+                configuration.setExposedHeaders(Arrays.asList(
+                                "Authorization",
+                                "X-Total-Count"));
 
-        // Cache preflight response for 1 hour
-        configuration.setMaxAge(3600L);
+                // Cache preflight response for 1 hour
+                configuration.setMaxAge(3600L);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", configuration);
 
-        return source;
-    }
+                return source;
+        }
 }
