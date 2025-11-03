@@ -269,8 +269,7 @@ public class AuthService {
         user.setFirstName(updateUserRequest.getFirstName());
         user.setLastName(updateUserRequest.getLastName());
         user.setEmail(updateUserRequest.getEmail());
-        user.setUsername(updateUserRequest.getUsername());
-        user.setStatus(UserStatus.valueOf(updateUserRequest.getStatus()));
+        user.setStatus(updateUserRequest.getStatus());
         if (updateUserRequest.getRoles() != null) {
             user.setRoles(new HashSet<>(updateUserRequest.getRoles()));
         }
@@ -379,6 +378,7 @@ public class AuthService {
     /**
      * Invalidate all sessions for a user
      */
+
     public void invalidateAllUserSessions(UUID userId) {
         try {
             LocalDateTime now = LocalDateTime.now();

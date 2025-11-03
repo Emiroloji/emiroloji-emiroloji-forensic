@@ -5,19 +5,19 @@ import com.forensic.auth.entity.Role;
 import com.forensic.auth.entity.User;
 import com.forensic.auth.entity.UserStatus;
 import com.forensic.auth.repository.UserRepository;
-import com.forensic.auth.repository.UserSessionRepository;
-import com.forensic.auth.security.JwtTokenProvider;
+import com.forensic.auth.repository.UserSessionRepository; // Bu import hatalı kod bloğundan kalmış olabilir, ama UserService'te direkt kullanılmıyor. Zararı yok.
+import com.forensic.auth.security.JwtTokenProvider; // Bu import hatalı kod bloğundan kalmış olabilir, ama UserService'te direkt kullanılmıyor. Zararı yok.
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.authentication.AuthenticationManager; // Bu import hatalı kod bloğundan kalmış olabilir.
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken; // Bu import hatalı kod bloğundan kalmış olabilir.
+import org.springframework.security.core.Authentication; // Bu import hatalı kod bloğundan kalmış olabilir.
+import org.springframework.security.core.GrantedAuthority; // Bu import hatalı kod bloğundan kalmış olabilir.
+import org.springframework.security.core.context.SecurityContextHolder; // Bu import hatalı kod bloğundan kalmış olabilir.
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -297,140 +297,6 @@ public class UserService {
                 user.getUpdatedAt());
     }
 
-    /**
-     * Authentication Service
-     * * Handles authentication-related operations including session management
-     */
-    @Service
-    @Transactional
-    public class AuthService {
+    // --- HATALI KOD BLOĞU (AuthService Sınıfı) BURADAN KALDIRILDI ---
 
-        private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
-
-        private final AuthService service;
-        @Autowired
-        private UserSessionRepository userSessionRepository;
-
-
-        @Autowired
-        private AuthenticationManager authenticationManager;
-
-        @Autowired
-        private UserRepository userRepository;
-
-        @Autowired
-        private PasswordEncoder passwordEncoder;
-
-        @Autowired
-        private JwtTokenProvider jwtTokenProvider;
-
-        public AuthService(AuthService service) {
-            this.service = service;
-        }
-
-
-        // --- DÜZELTME: EKSİK METOTLARI EKLE ---
-
-        /**
-         * Authenticate user and return JWT
-         */
-        public LoginResponse authenticateUser(LoginRequest loginRequest, String ipAddress, String userAgent) {
-            try {
-                Authentication authentication = authenticationManager.authenticate(
-                        new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                UserDetailsServiceImpl.UserPrincipal userPrincipal = (UserDetailsServiceImpl.UserPrincipal) authentication.getPrincipal();
-                String accessToken = jwtTokenProvider.generateToken(authentication);
-                String refreshToken = jwtTokenProvider.generateRefreshToken(userPrincipal.getUsername());
-
-                User user = userRepository.findById(userPrincipal.getId())
-                        .orElseThrow(() -> new RuntimeException("User not found after authentication"));
-
-                UUID userId;
-                try {
-                    userId = UUID.fromString(user.getId());
-                } catch (IllegalArgumentException e) {
-                    logger.error("Invalid UUID format for user ID: {}", user.getId());
-                    throw new RuntimeException("Invalid user ID format", e);
-                }
-
-                String sessionId = service.createSession(
-                        userId,
-                        accessToken,
-                        refreshToken,
-                        ipAddress,
-                        userAgent
-                );
-
-                user.setLastLogin(LocalDateTime.now());
-                userRepository.save(user);
-
-                List<String> roles = userPrincipal.getAuthorities().stream()
-                        .map(GrantedAuthority::getAuthority)
-                        .collect(Collectors.toList());
-
-                LoginResponse.UserInfo userInfo = new LoginResponse.UserInfo(
-                        userPrincipal.getId(),
-                        userPrincipal.getUsername(),
-                        userPrincipal.getEmail(),
-                        userPrincipal.getFirstName(),
-                        userPrincipal.getLastName(),
-                        userPrincipal.getStatus().name(),
-                        roles,
-                        userPrincipal.isTwoFactorEnabled(),
-                        userPrincipal.getLastLogin());
-
-                return new LoginResponse(
-                        accessToken,
-                        refreshToken,
-                        "Bearer",
-                        jwtTokenProvider.getTimeUntilExpiration(accessToken),
-                        userInfo,
-                        sessionId);
-
-            } catch (Exception e) {
-                logger.error("Authentication failed for user {}: {}", loginRequest.getUsername(), e.getMessage());
-                throw new RuntimeException("Invalid credentials", e);
-            }
-        }
-
-        /**
-         * Register a new user
-         */
-        /**
-         * Get user profile
-         */
-        /**
-         * Update user profile
-         */
-        /**
-         * Get all users
-         */
-        /**
-         * Get user by ID
-         */
-        /**
-         * Update user by ID
-         */
-        /**
-         * Delete user by ID
-         */
-        public void deleteUserById(String id) {
-            userRepository.deleteById(id);
-        }
-
-            User user = userRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-
-            user.setFirstName(updateUserRequest.getFirstName());
-            user.setLastName(updateUserRequest.getLastName());
-            user.setEmail(updateUserRequest.getEmail());
-            user.setUsername(updateUserRequest.getUsername());
-            user.setStatus(UserStatus.valueOf(updateUserRequest.getStatus()));
-            // Role update logic can be added here if needed
-
-            return userRepository.save(user);
-        }
 }

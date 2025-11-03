@@ -5,18 +5,45 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8a0f9490-5bc0-4a71-8b87-df9e04268e68" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/forensic/auth/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/forensic/auth/config/SecurityConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/forensic/auth/controller/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/forensic/auth/controller/AuthController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/forensic/auth/security/JwtTokenProvider.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/forensic/auth/security/JwtTokenProvider.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/forensic/auth/service/AuthService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/forensic/auth/service/AuthService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/forensic/auth/service/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/forensic/auth/service/UserService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/config/SecurityConfig.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/forensic/auth/config/SecurityConfig.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/AuthServiceApplication.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/config/SecurityConfig.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/config/SwaggerConfig.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/forensic/auth/config/SwaggerConfig.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/controller/AuthController.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/forensic/auth/controller/AuthController.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/security/JwtTokenProvider.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/forensic/auth/security/JwtTokenProvider.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/service/AuthService.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/forensic/auth/service/AuthService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/dto/ChangePasswordRequest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/dto/ErrorResponse.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/forensic/auth/dto/ErrorResponse.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/dto/LoginRequest.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/forensic/auth/dto/LoginRequest.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/dto/LoginResponse$UserInfo.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/dto/LoginResponse.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/dto/MessageResponse.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/dto/RefreshTokenRequest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/dto/RefreshTokenResponse.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/dto/RegisterRequest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/dto/UpdateProfileRequest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/dto/UpdateUserRequest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/dto/UserInfo.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/entity/Role.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/forensic/auth/entity/Role.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/entity/User.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/entity/UserSession.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/entity/UserStatus.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/repository/UserRepository.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/repository/UserSessionRepository.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/security/JwtAuthenticationEntryPoint.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/security/JwtAuthenticationFilter.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/security/JwtTokenProvider.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/service/AuthService.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/service/UserDetailsServiceImpl$UserPrincipal.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/forensic/auth/service/UserDetailsServiceImpl$UserPrincipal.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/service/UserDetailsServiceImpl.class" beforeDir="false" afterPath="$PROJECT_DIR$/target/classes/com/forensic/auth/service/UserDetailsServiceImpl.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/service/UserService$AuthService.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/classes/com/forensic/auth/service/UserService.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" beforeDir="false" afterPath="$PROJECT_DIR$/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/application-test.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/forensic/auth/IntegrationTest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/forensic/auth/controller/AuthControllerTest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/forensic/auth/security/JwtTokenProviderTest.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/test-classes/com/forensic/auth/service/AuthServiceTest.class" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -98,7 +125,7 @@
       <option name="presentableId" value="Default" />
       <updated>1761744246601</updated>
       <workItem from="1761744248290" duration="8413000" />
-      <workItem from="1762161687789" duration="883000" />
+      <workItem from="1762161687789" duration="2457000" />
     </task>
     <servers />
   </component>
